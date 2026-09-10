@@ -1,0 +1,292 @@
+openapi: 3.0.3
+info:
+  title: BiniTech Product Import API
+  version: 1.0.0
+  description: API multi-tenant para validar e importar produtos em massa.
+servers:
+  - url: /
+tags:
+  - name: ProductImports
+paths:
+  /api/product-imports:
+    post:
+      tags: [ProductImports]
+      operationId: uploadProductImport
+      summary: Enviar CSV ou Excel e detectar as colunas
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema: { type: string, maxLength: 100 }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '201':
+          description: Arquivo recebido
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportJobDTO' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '413': { description: Arquivo excede o limite permitido }
+  /api/product-imports/template:
+    get:
+      tags: [ProductImports]
+      operationId: downloadProductImportTemplate
+      summary: Baixar modelo CSV em português
+      responses:
+        '200':
+          description: Modelo de importação
+          content:
+            text/csv:
+              schema: { type: string, format: binary }
+  /api/product-imports/{id}:
+    get:
+      tags: [ProductImports]
+      operationId: getProductImport
+      parameters: [{$ref: '#/components/parameters/ImportId'}]
+      responses:
+        '200':
+          description: Estado atual
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportJobDTO' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [ProductImports]
+      operationId: cancelProductImport
+      parameters: [{$ref: '#/components/parameters/ImportId'}]
+      responses:
+        '204': { description: Importação cancelada }
+  /api/product-imports/{id}/validate:
+    post:
+      tags: [ProductImports]
+      operationId: validateProductImport
+      parameters: [{$ref: '#/components/parameters/ImportId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ValidateImportRequest' }
+      responses:
+        '200':
+          description: Resultado da validação
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportJobDTO' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /api/product-imports/{id}/start:
+    post:
+      tags: [ProductImports]
+      operationId: startProductImport
+      parameters: [{$ref: '#/components/parameters/ImportId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StartImportRequest' }
+      responses:
+        '202':
+          description: Importação enfileirada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportJobDTO' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /api/product-imports/{id}/rows:
+    get:
+      tags: [ProductImports]
+      operationId: listProductImportRows
+      parameters:
+        - $ref: '#/components/parameters/ImportId'
+        - { name: page, in: query, schema: { type: integer, minimum: 0, default: 0 } }
+        - { name: size, in: query, schema: { type: integer, minimum: 1, maximum: 200, default: 50 } }
+        - { name: issuesOnly, in: query, schema: { type: boolean, default: false } }
+      responses:
+        '200':
+          description: Pré-visualização paginada
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ImportRowDTO' }
+  /api/product-imports/{id}/rows/{lineNumber}:
+    patch:
+      tags: [ProductImports]
+      operationId: overrideProductImportRow
+      summary: Manter ou atualizar individualmente um produto existente
+      parameters:
+        - $ref: '#/components/parameters/ImportId'
+        - name: lineNumber
+          in: path
+          required: true
+          schema: { type: integer, minimum: 2 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RowActionOverrideRequest' }
+      responses:
+        '200':
+          description: Decisão atualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportRowDTO' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/product-imports/{id}/errors:
+    get:
+      tags: [ProductImports]
+      operationId: downloadProductImportErrors
+      parameters: [{$ref: '#/components/parameters/ImportId'}]
+      responses:
+        '200':
+          description: Relatório CSV de erros
+          content:
+            text/csv:
+              schema: { type: string, format: binary }
+components:
+  parameters:
+    ImportId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+  responses:
+    BadRequest:
+      description: Dados inválidos
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorDTO' }
+    NotFound:
+      description: Importação não encontrada
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorDTO' }
+  schemas:
+    ImportStatus:
+      type: string
+      enum: [PENDING, PROCESSING, COMPLETED, COMPLETED_WITH_ERRORS, FAILED, CANCELLED]
+    ImportField:
+      type: string
+      enum: [NAME, BARCODE, PRICE, COST, STOCK_QUANTITY, CATEGORY, ACTIVE, IGNORE]
+    ImportMode:
+      type: string
+      enum: [CREATE_ONLY, CREATE_AND_UPDATE]
+    StockMode:
+      type: string
+      enum: [IGNORE, REPLACE, INCREMENT]
+    DuplicateStrategy:
+      type: string
+      enum: [ERROR, FIRST, LAST]
+    RowAction:
+      type: string
+      enum: [CREATE, UPDATE, IGNORE, ERROR]
+    RowActionOverrideRequest:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [UPDATE, IGNORE]
+    ColumnMappingDTO:
+      type: object
+      required: [sourceColumn, targetField]
+      properties:
+        sourceColumn: { type: string }
+        targetField: { $ref: '#/components/schemas/ImportField' }
+        confidence: { type: number, format: double, minimum: 0, maximum: 1, readOnly: true }
+    ValidateImportRequest:
+      type: object
+      required: [mappings]
+      properties:
+        mappings:
+          type: array
+          items: { $ref: '#/components/schemas/ColumnMappingDTO' }
+        duplicateStrategy: { $ref: '#/components/schemas/DuplicateStrategy' }
+    StartImportRequest:
+      type: object
+      required: [mode, stockMode]
+      properties:
+        mode: { $ref: '#/components/schemas/ImportMode' }
+        stockMode: { $ref: '#/components/schemas/StockMode' }
+        updateFields:
+          type: array
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/ImportField' }
+        confirmStockChange: { type: boolean, default: false }
+    ImportIssueDTO:
+      type: object
+      properties:
+        severity: { type: string, enum: [WARNING, ERROR] }
+        field: { type: string }
+        code: { type: string }
+        message: { type: string }
+        relatedLines:
+          type: array
+          items: { type: integer }
+    ImportRowDTO:
+      type: object
+      properties:
+        lineNumber: { type: integer }
+        name: { type: string }
+        barcode: { type: string }
+        price: { type: number }
+        cost: { type: number }
+        stockQuantity: { type: integer }
+        category: { type: string }
+        active: { type: boolean }
+        action: { $ref: '#/components/schemas/RowAction' }
+        existingProductId: { type: string }
+        currentPrice: { type: number }
+        currentStockQuantity: { type: integer }
+        issues:
+          type: array
+          items: { $ref: '#/components/schemas/ImportIssueDTO' }
+    ImportSummaryDTO:
+      type: object
+      properties:
+        totalRecords: { type: integer }
+        validRecords: { type: integer }
+        warningRecords: { type: integer }
+        errorRecords: { type: integer }
+        processedRecords: { type: integer }
+        createdRecords: { type: integer }
+        updatedRecords: { type: integer }
+        ignoredRecords: { type: integer }
+    ImportJobDTO:
+      type: object
+      properties:
+        id: { type: string }
+        status: { $ref: '#/components/schemas/ImportStatus' }
+        fileName: { type: string }
+        fileSize: { type: integer, format: int64 }
+        headers:
+          type: array
+          items: { type: string }
+        suggestedMappings:
+          type: array
+          items: { $ref: '#/components/schemas/ColumnMappingDTO' }
+        sampleRows:
+          type: array
+          items:
+            type: object
+            additionalProperties: { type: string }
+        summary: { $ref: '#/components/schemas/ImportSummaryDTO' }
+        validated: { type: boolean }
+        progressPercentage: { type: integer, minimum: 0, maximum: 100 }
+        createdAt: { type: string, format: date-time }
+        startedAt: { type: string, format: date-time }
+        finishedAt: { type: string, format: date-time }
+        failureMessage: { type: string }
+    ErrorDTO:
+      type: object
+      properties:
+        code: { type: string }
+        message: { type: string }
+        timestamp: { type: string, format: date-time }
