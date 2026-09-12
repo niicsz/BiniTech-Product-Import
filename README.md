@@ -1,5 +1,7 @@
 # BiniTech Product Import
 
+[![CI](https://github.com/niicsz/BiniTech-Product-Import/actions/workflows/ci.yml/badge.svg)](https://github.com/niicsz/BiniTech-Product-Import/actions/workflows/ci.yml)
+
 Microserviço API-first para importação e migração de produtos por CSV, XLSX e XLS. O serviço é independente do backend do PDV, segue arquitetura hexagonal e possui banco MongoDB exclusivo. O frontend continua sendo a SPA Angular do BiniTech PDV.
 
 ## Fluxo
