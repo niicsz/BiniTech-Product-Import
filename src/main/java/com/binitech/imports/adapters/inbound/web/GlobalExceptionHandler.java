@@ -4,6 +4,8 @@ import com.binitech.imports.adapters.inbound.web.generated.model.ErrorDTO;
 import com.binitech.imports.domain.exception.*;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -12,6 +14,8 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+  private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
   @ExceptionHandler(ResourceNotFoundException.class)
   ResponseEntity<ErrorDTO> notFound(ResourceNotFoundException exception) {
     return error(HttpStatus.NOT_FOUND, "NOT_FOUND", exception.getMessage());
@@ -44,6 +48,7 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(Exception.class)
   ResponseEntity<ErrorDTO> generic(Exception exception) {
+    LOGGER.error("Unexpected product import error", exception);
     return error(
         HttpStatus.INTERNAL_SERVER_ERROR,
         "INTERNAL_ERROR",
