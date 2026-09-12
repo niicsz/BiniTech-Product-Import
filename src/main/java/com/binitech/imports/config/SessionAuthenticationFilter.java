@@ -29,7 +29,7 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
         SessionIdentity identity = authentication.session(header.substring(7));
         var token =
             new UsernamePasswordAuthenticationToken(
-                identity, null, List.of(new SimpleGrantedAuthority("ROLE_" + identity.role())));
+                identity, null, List.of(new SimpleGrantedAuthority("ROLE_AUTHENTICATED")));
         SecurityContextHolder.getContext().setAuthentication(token);
       } catch (ExternalServiceUnavailableException exception) {
         SecurityContextHolder.clearContext();

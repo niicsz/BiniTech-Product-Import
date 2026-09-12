@@ -18,9 +18,8 @@ class SessionAuthenticationFilterTest {
   }
 
   @Test
-  void authenticatesUsingTheExistingAuthSessionEndpoint() throws Exception {
-    AuthenticationPort auth =
-        token -> new SessionIdentity("user-a", "ana", "TENANT_ADMIN", "tenant-a");
+  void authenticatesLegacyIdentityWithoutTrustingItsRole() throws Exception {
+    AuthenticationPort auth = token -> new SessionIdentity("user-a", "ana", null, "tenant-a");
     var request = new MockHttpServletRequest("GET", "/api/product-imports/job-1");
     request.addHeader("Authorization", "Bearer valid-token");
     var response = new MockHttpServletResponse();
@@ -32,6 +31,14 @@ class SessionAuthenticationFilterTest {
         (SessionIdentity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     assertEquals("tenant-a", principal.tenantId());
     assertEquals("user-a", principal.userId());
+    assertEquals(
+        "ROLE_AUTHENTICATED",
+        SecurityContextHolder.getContext()
+            .getAuthentication()
+            .getAuthorities()
+            .iterator()
+            .next()
+            .getAuthority());
   }
 
   @Test
