@@ -40,6 +40,28 @@ class TabularFileParserAdapterTest {
   }
 
   @Test
+  void parsesCsvExportWithDottedHeaderAndInvalidValuesForLaterRowValidation() {
+    String csv =
+        "\uFEFFDescrição do Produto;EAN;Valor Venda;Preço Custo;Qtd. Estoque;Grupo\r\n"
+            + "Coca-Cola 2L;7894900011517;10,99;6,50;20;Refrigerantes\r\n"
+            + "Pão de Forma;7891234567890;abc;4,20;10;Padaria\r\n"
+            + "Sabão em Pó 1kg;7893333333333;12,90;8,00;quinze;Limpeza\r\n";
+    List<Map<String, String>> rows = new ArrayList<>();
+
+    ParseResult result =
+        parser.parse(
+            new ByteArrayInputStream(csv.getBytes(StandardCharsets.UTF_8)),
+            "produtos_importacao_ruim.csv",
+            100,
+            (line, values) -> rows.add(values));
+
+    assertEquals(3, result.totalRecords());
+    assertEquals("Qtd. Estoque", result.headers().get(4));
+    assertEquals("abc", rows.get(1).get("Valor Venda"));
+    assertEquals("quinze", rows.get(2).get("Qtd. Estoque"));
+  }
+
+  @Test
   void rejectsMalformedBinaryCsv() {
     byte[] invalid = new byte[] {'n', 'o', 'm', 'e', ';', 0, 'x'};
     assertThrows(
