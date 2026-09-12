@@ -113,9 +113,9 @@ public class HttpProductCatalogAdapter implements ProductCatalogPort {
     }
   }
 
-  private record IdentityRequest(String userId, String tenantId, String role) {
+  private record IdentityRequest(String userId, String tenantId) {
     static IdentityRequest from(SessionIdentity i) {
-      return new IdentityRequest(i.userId(), i.tenantId(), i.role());
+      return new IdentityRequest(i.userId(), i.tenantId());
     }
   }
 
