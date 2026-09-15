@@ -57,6 +57,21 @@ class SessionAuthenticationFilterTest {
   }
 
   @Test
+  void returns403WithActionableMessageForPlatformAdminWithoutTenant() throws Exception {
+    AuthenticationPort auth = token -> new SessionIdentity("admin", "admin", "SUPER_ADMIN", null);
+    var request = new MockHttpServletRequest("POST", "/api/product-imports");
+    request.addHeader("Authorization", "Bearer authenticated-platform-admin");
+    var response = new MockHttpServletResponse();
+    var chain = new MockFilterChain();
+    new SessionAuthenticationFilter(auth).doFilter(request, response, chain);
+    assertEquals(403, response.getStatus());
+    assertTrue(response.getContentAsString().contains("TENANT_REQUIRED"));
+    assertTrue(response.getContentAsString().contains("loja de destino"));
+    assertNull(chain.getRequest());
+    assertNull(SecurityContextHolder.getContext().getAuthentication());
+  }
+
+  @Test
   void returns503WhenAuthIsUnavailable() throws Exception {
     AuthenticationPort auth =
         token -> {
