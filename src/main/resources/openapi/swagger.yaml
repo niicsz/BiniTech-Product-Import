@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: BiniTech Product Import API
   version: 1.0.0
-  description: API multi-tenant para validar e importar produtos em massa.
+  description: API multi-tenant para validar e importar produtos em massa. Sessões autenticadas sem tenant recebem 403 com código TENANT_REQUIRED em todos os endpoints de importação.
 servers:
   - url: /
 tags:
@@ -34,6 +34,11 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ImportJobDTO' }
         '400': { $ref: '#/components/responses/BadRequest' }
+        '403':
+          description: Conta sem loja vinculada (TENANT_REQUIRED) ou sem permissão
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorDTO' }
         '413': { description: Arquivo excede o limite permitido }
   /api/product-imports/template:
     get:

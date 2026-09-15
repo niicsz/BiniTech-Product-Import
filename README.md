@@ -16,6 +16,10 @@ Microserviço API-first para importação e migração de produtos por CSV, XLSX
 
 Os estados são PENDING, PROCESSING, COMPLETED, COMPLETED_WITH_ERRORS, FAILED e CANCELLED.
 
+Administradores da plataforma sem tenant não podem importar produtos: a API retorna
+403 `TENANT_REQUIRED`, orientando a usar uma conta da loja de destino. Isso não é
+expiração de sessão e não deve iniciar refresh ou logout no frontend.
+
 ## Arquitetura
 
     adapters/inbound/web + messaging

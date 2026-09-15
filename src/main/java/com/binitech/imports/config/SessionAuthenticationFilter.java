@@ -3,6 +3,7 @@ package com.binitech.imports.config;
 import com.binitech.imports.application.ports.outbound.AuthenticationPort;
 import com.binitech.imports.domain.SessionIdentity;
 import com.binitech.imports.domain.exception.ExternalServiceUnavailableException;
+import com.binitech.imports.domain.exception.TenantRequiredException;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import java.io.IOException;
@@ -31,6 +32,15 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
             new UsernamePasswordAuthenticationToken(
                 identity, null, List.of(new SimpleGrantedAuthority("ROLE_AUTHENTICATED")));
         SecurityContextHolder.getContext().setAuthentication(token);
+      } catch (TenantRequiredException exception) {
+        SecurityContextHolder.clearContext();
+        response.setStatus(403);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response
+            .getWriter()
+            .write("{\"code\":\"TENANT_REQUIRED\",\"message\":\"" + exception.getMessage() + "\"}");
+        return;
       } catch (ExternalServiceUnavailableException exception) {
         SecurityContextHolder.clearContext();
         response.setStatus(503);
