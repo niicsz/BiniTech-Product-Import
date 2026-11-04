@@ -203,7 +203,7 @@ components:
       type: object
       required: [sourceColumn, targetField]
       properties:
-        sourceColumn: { type: string }
+        sourceColumn: { type: string, maxLength: 200 }
         targetField: { $ref: '#/components/schemas/ImportField' }
         confidence: { type: number, format: double, minimum: 0, maximum: 1, readOnly: true }
     ValidateImportRequest:
@@ -213,6 +213,7 @@ components:
         mappings:
           type: array
           items: { $ref: '#/components/schemas/ColumnMappingDTO' }
+          maxItems: 100
         duplicateStrategy: { $ref: '#/components/schemas/DuplicateStrategy' }
     StartImportRequest:
       type: object
@@ -224,6 +225,7 @@ components:
           type: array
           uniqueItems: true
           items: { $ref: '#/components/schemas/ImportField' }
+          maxItems: 20
         confirmStockChange: { type: boolean, default: false }
     ImportIssueDTO:
       type: object
