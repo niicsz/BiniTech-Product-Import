@@ -4,10 +4,11 @@ spring:
   threads:
     virtual:
       enabled: true
+  mongodb:
+    uri: ${PRODUCT_IMPORT_MONGODB_URI}
+    database: ${PRODUCT_IMPORT_MONGODB_DATABASE:binitech_product_import}
   data:
     mongodb:
-      uri: ${PRODUCT_IMPORT_MONGODB_URI}
-      database: ${PRODUCT_IMPORT_MONGODB_DATABASE:binitech_product_import}
       auto-index-creation: true
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
