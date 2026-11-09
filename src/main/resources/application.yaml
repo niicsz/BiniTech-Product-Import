@@ -10,6 +10,8 @@ spring:
   data:
     mongodb:
       auto-index-creation: true
+      representation:
+        big-decimal: string
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
