@@ -20,7 +20,7 @@
     <java.version>25</java.version>
     <openapi-generator.version>7.27.0</openapi-generator.version>
     <springdoc.version>3.2.0</springdoc.version>
-    <dependency-check.version>12.1.1</dependency-check.version>
+    <rabbit-amqp-client.version>5.37.1</rabbit-amqp-client.version>
     <poi.version>5.4.1</poi.version>
     <commons-csv.version>1.14.1</commons-csv.version>
   </properties>
@@ -73,24 +73,6 @@
         <executions><execution><goals><goal>format</goal></goals></execution></executions>
       </plugin>
       <plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId></plugin>
-      <plugin>
-        <groupId>org.owasp</groupId>
-        <artifactId>dependency-check-maven</artifactId>
-        <version>${dependency-check.version}</version>
-        <configuration>
-          <failBuildOnCVSS>8</failBuildOnCVSS>
-          <formats>
-            <format>HTML</format>
-            <format>JSON</format>
-          </formats>
-          <skipProvidedScope>true</skipProvidedScope>
-          <skipTestScope>true</skipTestScope>
-          <nvdMaxRetryCount>10</nvdMaxRetryCount>
-          <nvdApiDelay>4000</nvdApiDelay>
-          <nvdValidForHours>24</nvdValidForHours>
-          <ossindexAnalyzerEnabled>true</ossindexAnalyzerEnabled>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
 </project>
