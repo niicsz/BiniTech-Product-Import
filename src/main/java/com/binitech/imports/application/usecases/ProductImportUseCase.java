@@ -193,12 +193,14 @@ public class ProductImportUseCase implements ProductImportUseCasePort {
 
   @Override
   public ImportJob get(String id, SessionIdentity identity) {
+    catalog.assertAuthorized(identity);
     return owned(id, identity);
   }
 
   @Override
   public List<ImportRow> rows(
       String id, int page, int size, boolean issuesOnly, SessionIdentity identity) {
+    catalog.assertAuthorized(identity);
     owned(id, identity);
     int safePage = Math.max(0, page);
     int safeSize = Math.min(200, Math.max(1, size));
@@ -230,6 +232,7 @@ public class ProductImportUseCase implements ProductImportUseCasePort {
 
   @Override
   public byte[] errorReport(String id, SessionIdentity identity) {
+    catalog.assertAuthorized(identity);
     owned(id, identity);
     ByteArrayOutputStream output = new ByteArrayOutputStream();
     output.writeBytes("\uFEFFlinha;produto;erro\r\n".getBytes(StandardCharsets.UTF_8));
@@ -247,6 +250,7 @@ public class ProductImportUseCase implements ProductImportUseCasePort {
 
   @Override
   public void cancel(String id, SessionIdentity identity) {
+    catalog.assertAuthorized(identity);
     ImportJob job = owned(id, identity);
     if (job.getStatus() == ImportStatus.COMPLETED
         || job.getStatus() == ImportStatus.COMPLETED_WITH_ERRORS) {
@@ -476,8 +480,9 @@ public class ProductImportUseCase implements ProductImportUseCasePort {
     row.addIssue(new ImportIssue(IssueSeverity.ERROR, field, code, message));
   }
 
-  private static String csv(String value) {
-    if (value == null) return "";
+  private static String csv(String raw) {
+    if (raw == null) return "";
+    String value = !raw.isEmpty() && "=+-@\t\r".indexOf(raw.charAt(0)) >= 0 ? "'" + raw : raw;
     return value.contains(";") || value.contains("\"") || value.contains("\n")
         ? "\"" + value.replace("\"", "\"\"") + "\""
         : value;
