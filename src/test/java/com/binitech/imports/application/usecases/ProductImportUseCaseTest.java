@@ -173,6 +173,30 @@ class ProductImportUseCaseTest {
   }
 
   @Test
+  void readsAlsoAskThePdvForPermission() {
+    ImportJob job = upload(validCsv().getBytes(StandardCharsets.UTF_8), null);
+    catalog.denied = true;
+    assertThrows(AccessDeniedException.class, () -> useCase.get(job.getId(), TENANT_A));
+    assertThrows(
+        AccessDeniedException.class, () -> useCase.rows(job.getId(), 0, 10, false, TENANT_A));
+    assertThrows(AccessDeniedException.class, () -> useCase.errorReport(job.getId(), TENANT_A));
+    assertThrows(AccessDeniedException.class, () -> useCase.cancel(job.getId(), TENANT_A));
+  }
+
+  @Test
+  void errorReportNeutralizesSpreadsheetFormulas() {
+    String csv =
+        "Descrição do Produto;EAN;Valor Venda;Preço de Custo;Qtd. Estoque;Grupo;Status\n"
+            + "=HYPERLINK(1);222;abc;2,00;1;Mercearia;sim\n";
+    ImportJob job = upload(csv.getBytes(StandardCharsets.UTF_8), null);
+    useCase.validate(job.getId(), mappings(), DuplicateStrategy.FIRST, TENANT_A);
+
+    String report = new String(useCase.errorReport(job.getId(), TENANT_A), StandardCharsets.UTF_8);
+
+    assertTrue(report.contains(";'=HYPERLINK(1);"), report);
+  }
+
+  @Test
   void keepsFailedAuditWhenFileIsEmptyOrTooLarge() {
     byte[] empty = "nome;codigo_barras;preco;estoque\n".getBytes(StandardCharsets.UTF_8);
     assertThrows(BusinessException.class, () -> upload(empty, "empty"));
