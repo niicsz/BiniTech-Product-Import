@@ -1,0 +1,39 @@
+name: binitech-product-import
+
+services:
+  mongodb:
+    image: mongo:8
+    ports:
+      - "127.0.0.1:27018:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  product-import:
+    build: .
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8082:8082"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      PORT: 8082
+      PRODUCT_IMPORT_MONGODB_URI: mongodb://mongodb:27017
+      PRODUCT_IMPORT_MONGODB_DATABASE: ${PRODUCT_IMPORT_MONGODB_DATABASE:-binitech_product_import}
+      PRODUCT_IMPORT_SERVICE_KEY: ${PRODUCT_IMPORT_SERVICE_KEY:?Defina PRODUCT_IMPORT_SERVICE_KEY no arquivo .env}
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-host.docker.internal}
+      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:?Defina RABBITMQ_USERNAME no arquivo .env}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?Defina RABBITMQ_PASSWORD no arquivo .env}
+      AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://host.docker.internal:8081}
+      PDV_SERVICE_URL: ${PDV_SERVICE_URL:-http://host.docker.internal:8080}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200}
+
+volumes:
+  mongo_data:

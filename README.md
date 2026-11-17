@@ -54,3 +54,12 @@ Swagger UI: /swagger-ui.html. OpenAPI gerado: /api-docs.
 - Estoque é ignorado por padrão. Substituir ou incrementar exige confirmação; valores anterior/importado ficam na auditoria.
 
 O domínio legado do PDV ainda usa double para preço. O importador mantém dinheiro em BigDecimal/Mongo Decimal128 e só converte no boundary interno do PDV. A migração global de produtos, vendas e contratos públicos deve ser feita separadamente.
+
+## Rodar localmente com Docker
+
+    cp .env.example .env
+    docker compose up --build
+
+O compose sobe o MongoDB do importador em 127.0.0.1:27018 e o serviço em http://localhost:8082. Ele não sobe RabbitMQ, Auth nem PDV: usa os que já estão rodando na máquina, por padrão os do docker-compose.local.yml do repositório BiniTech-PDV (RabbitMQ em 5672, Auth em 8081 e PDV em 8080).
+
+No .env, PRODUCT_IMPORT_SERVICE_KEY, RABBITMQ_USERNAME e RABBITMQ_PASSWORD precisam ser iguais aos do .env.local do PDV. Não use $ nos valores: o Docker Compose interpreta $texto como variável.
